@@ -94,6 +94,17 @@ async def websocket_endpoint(ws: WebSocket):
                 arm.reset()
                 await ws.send_json({"type": "ack", "m": "All Reset"})
 
+            elif msg_type == "target":
+                center = data.get("center", [0, 0])
+                obj_class = data.get("class", "unknown")
+                confidence = data.get("confidence", 0)
+                print(f"Target: {obj_class} ({confidence:.0%}) at pixel ({center[0]}, {center[1]})")
+                await ws.send_json({
+                    "type": "target_ack",
+                    "m": f"Target: {obj_class} at ({center[0]}, {center[1]})",
+                    "status": "received",
+                })
+
             elif msg_type == "sync":
                 result = await asyncio.to_thread(arm.sync)
                 await ws.send_json({"type": "sync", **result})
