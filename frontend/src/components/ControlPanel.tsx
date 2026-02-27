@@ -210,7 +210,9 @@ export function ControlPanel({
             noNetworks: t("noNetworks"),
             error: t("wifiError"),
             restartServer: t("restartServer"),
+            restartHint: t("restartHint"),
             rebootPi: t("rebootPi"),
+            rebootHint: t("rebootHint"),
             systemTitle: t("systemTitle"),
           }}
         />

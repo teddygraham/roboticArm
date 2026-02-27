@@ -43,7 +43,9 @@ const translations = {
     wifiError: "Error",
     systemTitle: "System",
     restartServer: "Restart Server",
+    restartHint: "Quick fix for camera or connection issues (~3s)",
     rebootPi: "Reboot Pi",
+    rebootHint: "Full system restart if server restart doesn't help (~30s)",
     confirmReboot: "Reboot the Raspberry Pi? This will take about 30 seconds.",
   },
   zh: {
@@ -89,7 +91,9 @@ const translations = {
     wifiError: "\u9519\u8BEF",
     systemTitle: "\u7CFB\u7EDF",
     restartServer: "\u91CD\u542F\u670D\u52A1",
+    restartHint: "\u5FEB\u901F\u4FEE\u590D\u6444\u50CF\u5934\u6216\u8FDE\u63A5\u95EE\u9898 (\u7EA63\u79D2)",
     rebootPi: "\u91CD\u542F Pi",
+    rebootHint: "\u670D\u52A1\u91CD\u542F\u65E0\u6548\u65F6\u5C1D\u8BD5\u5B8C\u6574\u91CD\u542F (\u7EA630\u79D2)",
     confirmReboot: "\u91CD\u542F\u6811\u8393\u6D3E\uFF1F\u5927\u7EA630\u79D2\u3002",
   },
 } as const;

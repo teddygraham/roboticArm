@@ -24,7 +24,9 @@ interface Props {
     noNetworks: string;
     error: string;
     restartServer: string;
+    restartHint: string;
     rebootPi: string;
+    rebootHint: string;
     systemTitle: string;
   };
 }
@@ -166,18 +168,24 @@ export function WiFiPanel({
         {labels.systemTitle}
       </h2>
       <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={onRestartServer}
-          className="bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500 font-bold py-2 px-4 rounded-md text-sm transition-colors"
-        >
-          {labels.restartServer}
-        </button>
-        <button
-          onClick={onRebootPi}
-          className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 font-bold py-2 px-4 rounded-md text-sm transition-colors"
-        >
-          {labels.rebootPi}
-        </button>
+        <div className="flex flex-col items-center">
+          <button
+            onClick={onRestartServer}
+            className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+          >
+            {labels.restartServer}
+          </button>
+          <p className="text-slate-500 text-[10px] mt-1 text-center">{labels.restartHint}</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <button
+            onClick={onRebootPi}
+            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+          >
+            {labels.rebootPi}
+          </button>
+          <p className="text-slate-500 text-[10px] mt-1 text-center">{labels.rebootHint}</p>
+        </div>
       </div>
     </div>
   );
