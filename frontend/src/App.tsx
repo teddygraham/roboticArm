@@ -37,6 +37,7 @@ export function App() {
       <VideoFeed
         streamUrl="/video"
         headerText={t("videoHeader")}
+        isConnected={isConnected}
         detections={detection.detections}
         selectedTarget={detection.selectedTarget}
         isDetecting={detection.isActive}

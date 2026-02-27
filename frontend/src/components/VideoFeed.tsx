@@ -5,6 +5,7 @@ import type { Detection, TargetSelection } from "../types";
 interface Props {
   streamUrl: string;
   headerText: string;
+  isConnected: boolean;
   detections: Detection[];
   selectedTarget: TargetSelection | null;
   isDetecting: boolean;
@@ -15,6 +16,7 @@ interface Props {
 export function VideoFeed({
   streamUrl,
   headerText,
+  isConnected,
   detections,
   selectedTarget,
   isDetecting,
@@ -24,6 +26,15 @@ export function VideoFeed({
   const videoRef = useRef<HTMLImageElement>(null);
   const detectCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const wasConnected = useRef(true);
+
+  // Reload MJPEG stream when WebSocket reconnects (false → true)
+  useEffect(() => {
+    if (isConnected && !wasConnected.current && videoRef.current) {
+      videoRef.current.src = `${streamUrl}?t=${Date.now()}`;
+    }
+    wasConnected.current = isConnected;
+  }, [isConnected, streamUrl]);
 
   // Register refs with detection hook
   useEffect(() => {
