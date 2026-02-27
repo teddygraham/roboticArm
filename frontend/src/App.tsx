@@ -5,6 +5,7 @@ import { useArm } from "./hooks/useArm";
 import { useDetection } from "./hooks/useDetection";
 import { useI18n } from "./hooks/useI18n";
 import { useWebSocket } from "./hooks/useWebSocket";
+import { useWiFi } from "./hooks/useWiFi";
 import type { WsIncoming } from "./types";
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
   armHandlerRef.current = arm.handleMessage;
 
   const detection = useDetection(send);
+  const wifi = useWiFi();
 
   const disconnectedMsg = t("disconnected");
 
@@ -62,6 +64,14 @@ export function App() {
         onClearTarget={detection.clearTarget}
         isConnected={isConnected}
         lastStatus={isConnected ? arm.lastStatus : disconnectedMsg}
+        wifiNetworks={wifi.networks}
+        wifiStatus={wifi.status}
+        wifiScanning={wifi.isScanning}
+        wifiConnecting={wifi.isConnecting}
+        wifiError={wifi.error}
+        onWifiScan={wifi.scan}
+        onWifiConnect={wifi.connect}
+        onWifiDisconnect={wifi.disconnect}
       />
     </div>
   );

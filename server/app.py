@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from .arm import ArmController
 from .camera import CameraManager
+from .wifi import WiFiManager
 
 STATIC_DIR = Path(__file__).parent / "static"
 HEARTBEAT_TIMEOUT = 5.0  # seconds without ping → safe position
@@ -19,6 +20,7 @@ HEARTBEAT_TIMEOUT = 5.0  # seconds without ping → safe position
 app = FastAPI()
 arm: ArmController = None
 cam: CameraManager = None
+wifi: WiFiManager = None
 
 # Track connected WebSocket clients and their last heartbeat
 _clients: dict[WebSocket, float] = {}
@@ -28,13 +30,15 @@ _clients: dict[WebSocket, float] = {}
 
 @app.on_event("startup")
 async def startup():
-    global arm, cam
+    global arm, cam, wifi
     print("Initializing arm controller...")
     arm = ArmController()
     print(f"  Angles: {arm.current_angles}")
     print(f"  Gripper: {arm.gripper_value}%")
     print("Initializing camera...")
     cam = CameraManager()
+    print("Initializing WiFi manager...")
+    wifi = WiFiManager()
     print("Starting heartbeat monitor...")
     asyncio.create_task(_heartbeat_monitor())
     print("Ready.")
@@ -200,6 +204,34 @@ async def diagnostics():
         "clients": len(_clients),
         "heartbeat_timeout_s": HEARTBEAT_TIMEOUT,
     }
+
+
+# --- WiFi management ---
+
+class WiFiConnectRequest(BaseModel):
+    ssid: str
+    password: str
+
+
+@app.get("/api/wifi/status")
+async def wifi_status():
+    return await asyncio.to_thread(wifi.status)
+
+
+@app.post("/api/wifi/scan")
+async def wifi_scan():
+    networks = await asyncio.to_thread(wifi.scan)
+    return {"networks": networks}
+
+
+@app.post("/api/wifi/connect")
+async def wifi_connect(req: WiFiConnectRequest):
+    return await asyncio.to_thread(wifi.connect, req.ssid, req.password)
+
+
+@app.post("/api/wifi/disconnect")
+async def wifi_disconnect():
+    return await asyncio.to_thread(wifi.disconnect)
 
 
 # --- Static files + index ---

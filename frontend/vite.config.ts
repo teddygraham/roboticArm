@@ -19,6 +19,7 @@ export default defineConfig({
       "/reset": "http://192.168.3.2:8080",
       "/sync": "http://192.168.3.2:8080",
       "/diagnostics": "http://192.168.3.2:8080",
+      "/api": "http://192.168.3.2:8080",
     },
   },
 });

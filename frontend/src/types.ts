@@ -21,6 +21,19 @@ export interface TargetSelection {
   center: [number, number];
 }
 
+export interface WiFiNetwork {
+  ssid: string;
+  signal: number;
+  secured: boolean;
+  active: boolean;
+}
+
+export interface WiFiStatus {
+  connected: boolean;
+  ssid: string | null;
+  ip: string | null;
+}
+
 // WebSocket message types
 export type WsOutgoing =
   | { type: "ping" }

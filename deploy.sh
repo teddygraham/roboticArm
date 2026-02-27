@@ -20,7 +20,7 @@ else
 
     # Deploy the FastAPI server package + built frontend
     ssh "$REMOTE" "mkdir -p ~/server/static/assets"
-    scp server/__init__.py server/app.py server/arm.py server/camera.py "$REMOTE:~/server/"
+    scp server/__init__.py server/app.py server/arm.py server/camera.py server/wifi.py "$REMOTE:~/server/"
     scp server/static/index.html "$REMOTE:~/server/static/"
     scp server/static/assets/* "$REMOTE:~/server/static/assets/"
     echo "Deployed server/ to Pi"
