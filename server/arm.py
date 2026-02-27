@@ -6,6 +6,7 @@ from pymycobot import MechArm270
 
 SAFE_ANGLES = [0, 0, 0, 0, 0, 0]
 SAFE_GRIPPER = 0
+GRIPPER_TYPE = 1  # Adaptive gripper
 
 
 class ArmController:
@@ -58,7 +59,7 @@ class ArmController:
                         if angles is not None:
                             self.mc.send_angles(angles, 100)
                         if grip is not None:
-                            self.mc.set_gripper_value(grip, 80)
+                            self.mc.set_gripper_value(grip, 80, GRIPPER_TYPE)
                     except Exception:
                         pass
             time.sleep(0.025)

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Deploy MechArm control server to Raspberry Pi
 # Usage:
-#   ./deploy.sh              — deploy server/ directory (FastAPI app)
+#   ./deploy.sh              — build frontend + deploy server/ directory
 #   ./deploy.sh legacy       — deploy mecharm_full_control.py (Flask backup)
 #   ./deploy.sh <file>       — deploy a specific file
 
@@ -13,10 +13,16 @@ if [ "$1" = "legacy" ]; then
 elif [ -n "$1" ]; then
     scp "$1" "$REMOTE:$REMOTE_DIR" && echo "Deployed $1"
 else
-    # Deploy the FastAPI server package
-    ssh "$REMOTE" "mkdir -p ~/server/static"
+    # Build frontend
+    echo "Building frontend..."
+    (cd frontend && npm run build) || { echo "Frontend build failed"; exit 1; }
+    echo ""
+
+    # Deploy the FastAPI server package + built frontend
+    ssh "$REMOTE" "mkdir -p ~/server/static/assets"
     scp server/__init__.py server/app.py server/arm.py server/camera.py "$REMOTE:~/server/"
     scp server/static/index.html "$REMOTE:~/server/static/"
+    scp server/static/assets/* "$REMOTE:~/server/static/assets/"
     echo "Deployed server/ to Pi"
     echo ""
     echo "To run on Pi:"

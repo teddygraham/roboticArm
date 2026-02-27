@@ -24,7 +24,7 @@
 | J4 | -160° | +160° | Wrist roll |
 | J5 | -100° | +100° | Wrist pitch |
 | J6 | -180° | +180° | End effector rotation |
-| Gripper | 0 (open) | 100 (closed) | Adaptive gripper |
+| Gripper | 0 (closed) | 100 (open) | Adaptive gripper |
 
 ### Servo Configuration
 

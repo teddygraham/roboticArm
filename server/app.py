@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .arm import ArmController
@@ -87,7 +88,7 @@ async def websocket_endpoint(ws: WebSocket):
             elif msg_type == "gripper":
                 value = data.get("value", 0)
                 arm.set_gripper(value)
-                status = "Open" if value < 50 else "Close"
+                status = "Open" if value > 50 else "Close"
                 await ws.send_json({"type": "ack", "m": f"Gripper {status} → {value}%"})
 
             elif msg_type == "reset":
@@ -170,7 +171,7 @@ async def update(req: UpdateRequest):
 @app.post("/gripper")
 async def gripper(req: GripperRequest):
     arm.set_gripper(req.value)
-    status = "Open" if req.value < 50 else "Close"
+    status = "Open" if req.value > 50 else "Close"
     return {"m": f"Gripper {status} → {req.value}%"}
 
 
@@ -202,6 +203,9 @@ async def diagnostics():
 
 
 # --- Static files + index ---
+
+app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def index():

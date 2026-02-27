@@ -1,0 +1,10 @@
+.playwright-mcp/
+HOME/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
+# Vite build output (generated from frontend/)
+server/static/assets/
+server/static/index.html
