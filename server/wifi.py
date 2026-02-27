@@ -50,8 +50,12 @@ class WiFiManager:
 
     def connect(self, ssid: str, password: str) -> dict:
         """Connect to a WiFi network. Returns {success, message}."""
+        # Delete any stale connection profile for this SSID to avoid
+        # "key-mgmt: property is missing" errors on reconnect
+        self._run(["sudo", "nmcli", "connection", "delete", ssid])
         result = self._run([
-            "nmcli", "device", "wifi", "connect", ssid, "password", password,
+            "sudo", "nmcli", "device", "wifi", "connect", ssid,
+            "password", password, "ifname", "wlan0",
         ])
         success = result.returncode == 0
         message = result.stdout.strip() if success else result.stderr.strip()
@@ -59,7 +63,7 @@ class WiFiManager:
 
     def disconnect(self) -> dict:
         """Disconnect wlan0. Returns {success, message}."""
-        result = self._run(["nmcli", "device", "disconnect", "wlan0"])
+        result = self._run(["sudo", "nmcli", "device", "disconnect", "wlan0"])
         success = result.returncode == 0
         message = result.stdout.strip() if success else result.stderr.strip()
         return {"success": success, "message": message or ("Disconnected" if success else "Failed")}

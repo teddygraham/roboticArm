@@ -1,6 +1,8 @@
 """FastAPI server for MechArm 270 remote control."""
 
 import asyncio
+import signal
+import threading
 import time
 from pathlib import Path
 
@@ -21,6 +23,7 @@ app = FastAPI()
 arm: ArmController = None
 cam: CameraManager = None
 wifi: WiFiManager = None
+_shutting_down = threading.Event()
 
 # Track connected WebSocket clients and their last heartbeat
 _clients: dict[WebSocket, float] = {}
@@ -46,6 +49,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    _shutting_down.set()
     if arm:
         arm.shutdown()
     if cam:
@@ -124,7 +128,7 @@ async def websocket_endpoint(ws: WebSocket):
 
 def _generate_mjpeg():
     """Yield MJPEG frames from camera with OSD overlay and adaptive quality."""
-    while True:
+    while not _shutting_down.is_set():
         frame = cam.get_frame()
         if frame is not None:
             y = 30
@@ -246,8 +250,21 @@ async def index():
 
 # --- Entry point ---
 
+def _force_exit(signum, _frame):
+    """Ensure clean shutdown even if uvicorn's graceful shutdown hangs."""
+    print(f"\nReceived signal {signum} — shutting down...")
+    _shutting_down.set()
+    if cam:
+        cam.shutdown()
+    if arm:
+        arm.shutdown()
+    raise SystemExit(0)
+
+
 def main():
     import uvicorn
+    signal.signal(signal.SIGTERM, _force_exit)
+    signal.signal(signal.SIGINT, _force_exit)
     print("=" * 50)
     print("MechArm Control System (FastAPI)")
     print("=" * 50)

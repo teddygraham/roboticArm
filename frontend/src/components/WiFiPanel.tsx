@@ -46,8 +46,6 @@ export function WiFiPanel({
     }
   };
 
-  const selectedNetwork = networks.find((n) => n.ssid === selectedSsid);
-
   return (
     <div className="space-y-4">
       {/* Status */}
@@ -93,65 +91,67 @@ export function WiFiPanel({
       {/* Network list */}
       {networks.length > 0 ? (
         <div className="space-y-1">
-          {networks.map((net) => (
-            <button
-              key={net.ssid}
-              onClick={() => {
-                setSelectedSsid(net.ssid === selectedSsid ? null : net.ssid);
-                setPassword("");
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${
-                net.active
-                  ? "bg-emerald-500/20 border border-emerald-500/40"
-                  : net.ssid === selectedSsid
-                    ? "bg-slate-700 border border-emerald-500/50"
-                    : "bg-slate-800 border border-slate-600 hover:border-slate-500"
-              }`}
-            >
-              <span className="flex items-center gap-2 text-slate-200 truncate">
-                {net.secured && <span className="text-amber-400 text-xs">&#x1F512;</span>}
-                {net.ssid}
-              </span>
-              <SignalBars signal={net.signal} />
-            </button>
-          ))}
+          {networks.map((net) => {
+            const isSelected = net.ssid === selectedSsid;
+            return (
+              <div key={net.ssid}>
+                <button
+                  onClick={() => {
+                    setSelectedSsid(isSelected ? null : net.ssid);
+                    setPassword("");
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                    net.active
+                      ? "bg-emerald-500/20 border border-emerald-500/40"
+                      : isSelected
+                        ? "bg-slate-700 border border-emerald-500/50 rounded-t-md"
+                        : "bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-md"
+                  } ${net.active ? "rounded-md" : ""}`}
+                >
+                  <span className="flex items-center gap-2 text-slate-200 truncate">
+                    {net.secured && <span className="text-amber-400 text-xs">&#x1F512;</span>}
+                    {net.ssid}
+                  </span>
+                  <SignalBars signal={net.signal} />
+                </button>
+                {isSelected && (
+                  <div className="bg-slate-700 border border-t-0 border-emerald-500/50 rounded-b-md px-3 py-3 space-y-2">
+                    {net.secured && (
+                      <div>
+                        <label className="text-slate-400 text-xs block mb-1">
+                          {labels.password}
+                        </label>
+                        <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleConnect()}
+                          autoFocus
+                          className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                    )}
+                    <button
+                      onClick={handleConnect}
+                      disabled={isConnecting || (net.secured && !password)}
+                      className={`w-full font-bold py-2 px-4 rounded-md text-sm transition-colors ${
+                        isConnecting
+                          ? "bg-slate-600 text-slate-400 cursor-wait"
+                          : "bg-emerald-500 hover:bg-emerald-600 text-slate-900"
+                      }`}
+                    >
+                      {isConnecting ? labels.connecting : labels.connect}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         !isScanning && (
           <p className="text-slate-500 text-xs text-center">{labels.noNetworks}</p>
         )
-      )}
-
-      {/* Password + connect for selected secured network */}
-      {selectedSsid && selectedNetwork && (
-        <div className="bg-slate-800 border border-slate-600 rounded-lg p-4 space-y-3">
-          <p className="text-slate-200 text-sm font-semibold">{selectedSsid}</p>
-          {selectedNetwork.secured && (
-            <div>
-              <label className="text-slate-400 text-xs block mb-1">
-                {labels.password}
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          )}
-          <button
-            onClick={handleConnect}
-            disabled={isConnecting || (selectedNetwork.secured && !password)}
-            className={`w-full font-bold py-2 px-4 rounded-md text-sm transition-colors ${
-              isConnecting
-                ? "bg-slate-600 text-slate-400 cursor-wait"
-                : "bg-emerald-500 hover:bg-emerald-600 text-slate-900"
-            }`}
-          >
-            {isConnecting ? labels.connecting : labels.connect}
-          </button>
-        </div>
       )}
     </div>
   );
