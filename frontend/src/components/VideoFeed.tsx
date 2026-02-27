@@ -95,7 +95,7 @@ export function VideoFeed({
             ref={videoRef}
             src={streamUrl}
             alt="Camera feed"
-            className="block max-w-full max-h-[70vh]"
+            className="block max-w-full max-h-[40vh] md:max-h-[70vh]"
           />
           <canvas
             ref={detectCanvasRef}

@@ -80,8 +80,8 @@ export function ControlPanel({
   const [activeTab, setActiveTab] = useState<"control" | "wifi">("control");
 
   return (
-    <div className="bg-slate-900 p-5 overflow-y-auto relative">
-      <div className="bg-emerald-500 text-slate-900 px-4 py-3 -mx-5 -mt-5 mb-5 text-center text-lg font-bold">
+    <div className="bg-slate-900 p-4 md:p-5 overflow-y-auto relative">
+      <div className="bg-emerald-500 text-slate-900 px-4 py-3 -mx-4 -mt-4 mb-4 md:-mx-5 md:-mt-5 md:mb-5 text-center text-base md:text-lg font-bold">
         {t("header")}
       </div>
 
@@ -96,7 +96,7 @@ export function ControlPanel({
       <div className="flex gap-1 mb-4">
         <button
           onClick={() => setActiveTab("control")}
-          className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${
+          className={`flex-1 py-2.5 md:py-1.5 text-sm font-bold rounded-md transition-colors ${
             activeTab === "control"
               ? "bg-emerald-500 text-slate-900"
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -106,7 +106,7 @@ export function ControlPanel({
         </button>
         <button
           onClick={() => setActiveTab("wifi")}
-          className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${
+          className={`flex-1 py-2.5 md:py-1.5 text-sm font-bold rounded-md transition-colors ${
             activeTab === "wifi"
               ? "bg-emerald-500 text-slate-900"
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"

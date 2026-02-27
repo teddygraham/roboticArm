@@ -33,7 +33,7 @@ export function App() {
   const disconnectedMsg = t("disconnected");
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] h-screen">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_450px] h-screen">
       <VideoFeed
         streamUrl="/video"
         headerText={t("videoHeader")}

@@ -81,7 +81,7 @@ export function WiFiPanel({
       <button
         onClick={onScan}
         disabled={isScanning}
-        className={`w-full font-bold py-2 px-4 rounded-md text-sm transition-colors ${
+        className={`w-full font-bold py-2.5 px-4 rounded-md text-sm transition-colors ${
           isScanning
             ? "bg-slate-600 text-slate-400 cursor-wait"
             : "bg-emerald-500 hover:bg-emerald-600 text-slate-900"
@@ -143,7 +143,7 @@ export function WiFiPanel({
                     <button
                       onClick={handleConnect}
                       disabled={isConnecting || (net.secured && !password)}
-                      className={`w-full font-bold py-2 px-4 rounded-md text-sm transition-colors ${
+                      className={`w-full font-bold py-2.5 px-4 rounded-md text-sm transition-colors ${
                         isConnecting
                           ? "bg-slate-600 text-slate-400 cursor-wait"
                           : "bg-emerald-500 hover:bg-emerald-600 text-slate-900"
@@ -171,20 +171,20 @@ export function WiFiPanel({
         <div className="flex flex-col items-center">
           <button
             onClick={onRestartServer}
-            className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+            className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500 font-bold py-2.5 px-4 rounded-md text-sm transition-colors"
           >
             {labels.restartServer}
           </button>
-          <p className="text-slate-500 text-[10px] mt-1 text-center">{labels.restartHint}</p>
+          <p className="text-slate-500 text-[11px] mt-1 text-center">{labels.restartHint}</p>
         </div>
         <div className="flex flex-col items-center">
           <button
             onClick={onRebootPi}
-            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 font-bold py-2.5 px-4 rounded-md text-sm transition-colors"
           >
             {labels.rebootPi}
           </button>
-          <p className="text-slate-500 text-[10px] mt-1 text-center">{labels.rebootHint}</p>
+          <p className="text-slate-500 text-[11px] mt-1 text-center">{labels.rebootHint}</p>
         </div>
       </div>
     </div>

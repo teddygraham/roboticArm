@@ -9,7 +9,7 @@ interface Props {
 
 export function JointSlider({ config, value, label, onChange }: Props) {
   return (
-    <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 mb-3">
+    <div className="bg-slate-800 border border-slate-600 rounded-lg p-2.5 md:p-3 mb-2 md:mb-3">
       <div className="flex justify-between mb-2 text-sm font-semibold">
         <span className="text-slate-200">{label}</span>
         <span className="text-amber-400 min-w-[60px] text-right">

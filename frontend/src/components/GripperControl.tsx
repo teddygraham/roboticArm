@@ -44,13 +44,13 @@ export function GripperControl({
       <div className="grid grid-cols-2 gap-3 mt-3">
         <button
           onClick={onClose}
-          className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+          className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-2.5 px-4 rounded-md text-sm transition-colors"
         >
           {labels.closeBtn}
         </button>
         <button
           onClick={onOpen}
-          className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+          className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-2.5 px-4 rounded-md text-sm transition-colors"
         >
           {labels.openBtn}
         </button>
