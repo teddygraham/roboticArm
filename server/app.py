@@ -1,7 +1,9 @@
 """FastAPI server for MechArm 270 remote control."""
 
 import asyncio
+import os
 import signal
+import subprocess
 import threading
 import time
 from pathlib import Path
@@ -236,6 +238,22 @@ async def wifi_connect(req: WiFiConnectRequest):
 @app.post("/api/wifi/disconnect")
 async def wifi_disconnect():
     return await asyncio.to_thread(wifi.disconnect)
+
+
+# --- System management ---
+
+@app.post("/api/system/restart")
+async def system_restart():
+    """Restart the server process. Relies on systemd to bring it back."""
+    os.kill(os.getpid(), signal.SIGTERM)
+    return {"success": True}
+
+
+@app.post("/api/system/reboot")
+async def system_reboot():
+    """Reboot the Raspberry Pi."""
+    subprocess.Popen(["sudo", "reboot"])
+    return {"success": True}
 
 
 # --- Static files + index ---

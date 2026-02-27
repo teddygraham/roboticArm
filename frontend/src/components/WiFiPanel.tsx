@@ -10,6 +10,8 @@ interface Props {
   onScan: () => void;
   onConnect: (ssid: string, password: string) => void;
   onDisconnect: () => void;
+  onRestartServer: () => void;
+  onRebootPi: () => void;
   labels: {
     connectedTo: string;
     notConnected: string;
@@ -21,6 +23,9 @@ interface Props {
     password: string;
     noNetworks: string;
     error: string;
+    restartServer: string;
+    rebootPi: string;
+    systemTitle: string;
   };
 }
 
@@ -33,6 +38,8 @@ export function WiFiPanel({
   onScan,
   onConnect,
   onDisconnect,
+  onRestartServer,
+  onRebootPi,
   labels,
 }: Props) {
   const [selectedSsid, setSelectedSsid] = useState<string | null>(null);
@@ -153,6 +160,25 @@ export function WiFiPanel({
           <p className="text-slate-500 text-xs text-center">{labels.noNetworks}</p>
         )
       )}
+
+      {/* System */}
+      <h2 className="text-emerald-400 text-sm font-semibold mb-3 pb-1 border-b border-slate-700 mt-2">
+        {labels.systemTitle}
+      </h2>
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={onRestartServer}
+          className="bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+        >
+          {labels.restartServer}
+        </button>
+        <button
+          onClick={onRebootPi}
+          className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+        >
+          {labels.rebootPi}
+        </button>
+      </div>
     </div>
   );
 }

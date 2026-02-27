@@ -24,8 +24,17 @@ else
     scp server/static/index.html "$REMOTE:~/server/static/"
     scp server/static/assets/* "$REMOTE:~/server/static/assets/"
     echo "Deployed server/ to Pi"
+
+    # Install systemd service (idempotent)
+    scp mecharm.service "$REMOTE:/tmp/mecharm.service"
+    ssh "$REMOTE" "sudo cp /tmp/mecharm.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable mecharm"
+    echo "Installed systemd service"
+
+    # Restart the service
+    ssh "$REMOTE" "sudo systemctl restart mecharm"
+    echo "Restarted mecharm service"
     echo ""
-    echo "To run on Pi:"
-    echo "  pip install fastapi 'uvicorn[standard]'  # first time only"
-    echo "  python -m server.app"
+    echo "Server running at http://192.168.3.2:8080"
+    echo "  sudo systemctl status mecharm   — check status"
+    echo "  sudo journalctl -u mecharm -f   — view logs"
 fi

@@ -41,6 +41,10 @@ const translations = {
     passwordLabel: "Password",
     noNetworks: "No networks found — tap Scan",
     wifiError: "Error",
+    systemTitle: "System",
+    restartServer: "Restart Server",
+    rebootPi: "Reboot Pi",
+    confirmReboot: "Reboot the Raspberry Pi? This will take about 30 seconds.",
   },
   zh: {
     videoHeader: "\u5B9E\u65F6\u89C6\u9891\u76D1\u63A7",
@@ -83,6 +87,10 @@ const translations = {
     passwordLabel: "\u5BC6\u7801",
     noNetworks: "\u672A\u627E\u5230\u7F51\u7EDC \u2014 \u70B9\u51FB\u626B\u63CF",
     wifiError: "\u9519\u8BEF",
+    systemTitle: "\u7CFB\u7EDF",
+    restartServer: "\u91CD\u542F\u670D\u52A1",
+    rebootPi: "\u91CD\u542F Pi",
+    confirmReboot: "\u91CD\u542F\u6811\u8393\u6D3E\uFF1F\u5927\u7EA630\u79D2\u3002",
   },
 } as const;
 

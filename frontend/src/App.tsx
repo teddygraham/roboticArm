@@ -72,6 +72,14 @@ export function App() {
         onWifiScan={wifi.scan}
         onWifiConnect={wifi.connect}
         onWifiDisconnect={wifi.disconnect}
+        onRestartServer={() => {
+          fetch("/api/system/restart", { method: "POST" }).catch(() => {});
+        }}
+        onRebootPi={() => {
+          if (confirm(t("confirmReboot") as string)) {
+            fetch("/api/system/reboot", { method: "POST" }).catch(() => {});
+          }
+        }}
       />
     </div>
   );

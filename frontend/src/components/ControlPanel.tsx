@@ -41,6 +41,8 @@ interface Props {
   onWifiScan: () => void;
   onWifiConnect: (ssid: string, password: string) => void;
   onWifiDisconnect: () => void;
+  onRestartServer: () => void;
+  onRebootPi: () => void;
 }
 
 export function ControlPanel({
@@ -72,6 +74,8 @@ export function ControlPanel({
   onWifiScan,
   onWifiConnect,
   onWifiDisconnect,
+  onRestartServer,
+  onRebootPi,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"control" | "wifi">("control");
 
@@ -192,6 +196,8 @@ export function ControlPanel({
           onScan={onWifiScan}
           onConnect={onWifiConnect}
           onDisconnect={onWifiDisconnect}
+          onRestartServer={onRestartServer}
+          onRebootPi={onRebootPi}
           labels={{
             connectedTo: t("wifiConnectedTo"),
             notConnected: t("wifiNotConnected"),
@@ -203,6 +209,9 @@ export function ControlPanel({
             password: t("passwordLabel"),
             noNetworks: t("noNetworks"),
             error: t("wifiError"),
+            restartServer: t("restartServer"),
+            rebootPi: t("rebootPi"),
+            systemTitle: t("systemTitle"),
           }}
         />
       )}
