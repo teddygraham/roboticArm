@@ -9,6 +9,14 @@ MAX_QUALITY = 75
 MIN_FPS = 5
 MAX_FPS = 15
 
+CAMERA_OPEN_RETRIES = 5
+CAMERA_OPEN_DELAY = 2  # seconds between retries
+
+
+def _log(msg: str):
+    """Print and flush immediately so journalctl sees it."""
+    print(msg, flush=True)
+
 
 class CameraManager:
     def __init__(self, device=0, width=480, height=360, fps=12, quality=65):
@@ -26,16 +34,32 @@ class CameraManager:
         self._last_deliver_time = 0.0
         self._stats_lock = threading.Lock()
 
-        self._cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
-        self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        self._cap = self._open_camera(device, width, height)
 
         self._thread = threading.Thread(target=self._capture_loop, daemon=True)
         self._thread.start()
 
+    def _open_camera(self, device, width, height):
+        """Open camera with retries — handles device still locked from previous process."""
+        for attempt in range(1, CAMERA_OPEN_RETRIES + 1):
+            _log(f"Opening camera (attempt {attempt}/{CAMERA_OPEN_RETRIES})...")
+            cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
+            if cap.isOpened():
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                _log(f"Camera opened on attempt {attempt}.")
+                return cap
+            _log(f"Camera not available (attempt {attempt}), retrying in {CAMERA_OPEN_DELAY}s...")
+            cap.release()
+            time.sleep(CAMERA_OPEN_DELAY)
+        _log("ERROR: Could not open camera after all retries. Starting without video.")
+        return None
+
     def _capture_loop(self):
         """Continuously grab frames at target fps."""
+        if self._cap is None:
+            return
         while self._running:
             interval = 1.0 / self.fps
             t0 = time.monotonic()
@@ -107,5 +131,17 @@ class CameraManager:
             }
 
     def shutdown(self):
+        if not self._running:
+            _log("Camera shutdown: already shut down, skipping.")
+            return
+        _log("Camera shutdown: stopping capture thread...")
         self._running = False
-        self._cap.release()
+        self._thread.join(timeout=2)
+        if self._thread.is_alive():
+            _log("Camera shutdown: WARNING — capture thread did not stop in 2s")
+        else:
+            _log("Camera shutdown: capture thread stopped.")
+        if self._cap is not None:
+            self._cap.release()
+            _log("Camera shutdown: device released.")
+        _log("Camera shutdown: complete.")

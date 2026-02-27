@@ -7,7 +7,9 @@ Type=simple
 User=pi
 WorkingDirectory=/home/pi
 ExecStart=/usr/bin/python3 -m server.app
-Restart=on-failure
+TimeoutStopSec=10
+ExecStopPost=-/usr/bin/fuser -k /dev/video0
+Restart=always
 RestartSec=3
 
 [Install]

@@ -1,8 +1,7 @@
 """FastAPI server for MechArm 270 remote control."""
 
+import atexit
 import asyncio
-import os
-import signal
 import subprocess
 import threading
 import time
@@ -44,6 +43,13 @@ async def startup():
     cam = CameraManager()
     print("Initializing WiFi manager...")
     wifi = WiFiManager()
+    # atexit ensures camera releases even if uvicorn's shutdown event is skipped
+    def _atexit_cleanup():
+        print("[atexit] Running atexit camera cleanup...", flush=True)
+        if cam:
+            cam.shutdown()
+        print("[atexit] Done.", flush=True)
+    atexit.register(_atexit_cleanup)
     print("Starting heartbeat monitor...")
     asyncio.create_task(_heartbeat_monitor())
     print("Ready.")
@@ -51,11 +57,15 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    print("[shutdown] ASGI shutdown event fired", flush=True)
     _shutting_down.set()
     if arm:
+        print("[shutdown] Shutting down arm...", flush=True)
         arm.shutdown()
     if cam:
+        print("[shutdown] Shutting down camera...", flush=True)
         cam.shutdown()
+    print("[shutdown] Shutdown complete.", flush=True)
 
 
 # --- Heartbeat monitor ---
@@ -244,8 +254,8 @@ async def wifi_disconnect():
 
 @app.post("/api/system/restart")
 async def system_restart():
-    """Restart the server process. Relies on systemd to bring it back."""
-    os.kill(os.getpid(), signal.SIGTERM)
+    """Restart via systemctl — ensures clean shutdown and restart."""
+    subprocess.Popen(["sudo", "systemctl", "restart", "mecharm"])
     return {"success": True}
 
 
@@ -268,27 +278,15 @@ async def index():
 
 # --- Entry point ---
 
-def _force_exit(signum, _frame):
-    """Ensure clean shutdown even if uvicorn's graceful shutdown hangs."""
-    print(f"\nReceived signal {signum} — shutting down...")
-    _shutting_down.set()
-    if cam:
-        cam.shutdown()
-    if arm:
-        arm.shutdown()
-    raise SystemExit(0)
-
-
 def main():
     import uvicorn
-    signal.signal(signal.SIGTERM, _force_exit)
-    signal.signal(signal.SIGINT, _force_exit)
     print("=" * 50)
     print("MechArm Control System (FastAPI)")
     print("=" * 50)
     print("Browser: http://192.168.3.2:8080")
     print("=" * 50)
-    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="warning")
+    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="warning",
+                timeout_graceful_shutdown=3)
 
 
 if __name__ == "__main__":
