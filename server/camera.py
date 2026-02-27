@@ -26,7 +26,7 @@ class CameraManager:
         self._last_deliver_time = 0.0
         self._stats_lock = threading.Lock()
 
-        self._cap = cv2.VideoCapture(device)
+        self._cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
