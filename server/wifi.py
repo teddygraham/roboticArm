@@ -1,6 +1,15 @@
 """WiFi management via nmcli for headless Raspberry Pi."""
 
+import re
 import subprocess
+
+# nmcli terse mode uses : as delimiter and escapes literal colons as \:
+_NMCLI_SPLIT = re.compile(r"(?<!\\):")
+
+
+def _nmcli_split(line: str) -> list[str]:
+    """Split an nmcli terse-mode line on unescaped colons, then unescape."""
+    return [f.replace("\\:", ":").replace("\\\\", "\\") for f in _NMCLI_SPLIT.split(line)]
 
 
 class WiFiManager:
@@ -20,7 +29,7 @@ class WiFiManager:
 
         seen: dict[str, dict] = {}
         for line in result.stdout.strip().splitlines():
-            parts = line.split(":")
+            parts = _nmcli_split(line)
             if len(parts) < 4:
                 continue
             ssid = parts[0].strip()
@@ -65,7 +74,7 @@ class WiFiManager:
         ssid = None
         if result.returncode == 0:
             for line in result.stdout.strip().splitlines():
-                parts = line.split(":")
+                parts = _nmcli_split(line)
                 if len(parts) >= 3 and parts[2].strip() == "802-11-wireless":
                     ssid = parts[0].strip()
                     break
