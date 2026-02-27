@@ -430,7 +430,7 @@
         }
 
         async function detectFrame() {
-            if (inferenceRunning || !detectModel || !videoImg.complete) return;
+            if (inferenceRunning || !detectModel || !videoImg.naturalWidth) return;
             inferenceRunning = true;
             try {
                 detectCtx.drawImage(videoImg, 0, 0, 480, 360);
