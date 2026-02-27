@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mecharm": {
+      "type": "stdio",
+      "command": "/Users/ericgraham/code/roboticArm/mcp-server/.venv/bin/python",
+      "args": ["mcp-server/mecharm_mcp.py"],
+      "env": {
+        "MECHARM_URL": "http://mecharm.local"
+      }
+    }
+  }
+}

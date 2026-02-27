@@ -1,5 +1,6 @@
 .playwright-mcp/
 HOME/
+mcp-server/.venv/
 
 # Frontend build artifacts
 frontend/node_modules/
