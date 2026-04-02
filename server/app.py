@@ -2,12 +2,12 @@
 
 import atexit
 import asyncio
+import os
 import subprocess
 import threading
 import time
 from pathlib import Path
 
-import cv2
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +19,7 @@ from .wifi import WiFiManager
 
 STATIC_DIR = Path(__file__).parent / "static"
 HEARTBEAT_TIMEOUT = 5.0  # seconds without ping → safe position
+INFERENCE_URL = os.environ.get("INFERENCE_URL", "")
 
 app = FastAPI()
 arm: ArmController = None
@@ -80,7 +81,7 @@ async def _heartbeat_monitor():
         all_stale = all(now - ts > HEARTBEAT_TIMEOUT for ts in _clients.values())
         if all_stale:
             print("Heartbeat timeout — moving arm to safe position")
-            arm.go_safe()
+            await asyncio.to_thread(arm.go_safe)
 
 
 # --- WebSocket (control + heartbeat) ---
@@ -126,6 +127,15 @@ async def websocket_endpoint(ws: WebSocket):
                     "status": "received",
                 })
 
+            elif msg_type == "coords":
+                coords = data.get("coords", [])
+                await asyncio.to_thread(arm.set_coords, coords)
+                await ws.send_json({"type": "ack", "m": f"Coords → {[round(c, 1) for c in coords]}"})
+
+            elif msg_type == "sync_coords":
+                coords = await asyncio.to_thread(arm.get_coords)
+                await ws.send_json({"type": "coords", "coords": coords or []})
+
             elif msg_type == "sync":
                 result = await asyncio.to_thread(arm.sync)
                 await ws.send_json({"type": "sync", **result})
@@ -139,23 +149,14 @@ async def websocket_endpoint(ws: WebSocket):
 # --- MJPEG video stream ---
 
 def _generate_mjpeg():
-    """Yield MJPEG frames from camera with OSD overlay and adaptive quality."""
+    """Yield MJPEG frames from cached JPEG bytes (no re-encoding)."""
     while not _shutting_down.is_set():
-        frame = cam.get_frame()
-        if frame is not None:
-            y = 30
-            for i, a in enumerate(arm.current_angles):
-                cv2.putText(frame, f"J{i+1}:{a:.1f}", (10, y),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                y += 25
-            cv2.putText(frame, f"Gripper:{arm.gripper_value}%", (10, y),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-            jpg = cam.encode_jpeg(frame)
-            if jpg:
-                cam.record_frame_sent(len(jpg))
-                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpg + b"\r\n")
-            else:
-                cam.record_frame_skipped()
+        jpg = cam.get_raw_jpeg()
+        if jpg is not None:
+            cam.record_frame_sent(len(jpg))
+            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpg + b"\r\n")
+        else:
+            cam.record_frame_skipped()
         cam.adapt()
         time.sleep(1.0 / cam.fps)
 
@@ -168,6 +169,16 @@ async def video():
     )
 
 
+@app.get("/snapshot")
+async def snapshot():
+    """Return a single JPEG frame for AI inference."""
+    from fastapi.responses import Response
+    jpg = cam.get_raw_jpeg()
+    if jpg is None:
+        return Response(status_code=503, content="Camera not ready")
+    return Response(content=jpg, media_type="image/jpeg")
+
+
 # --- HTTP fallback endpoints (same as original Flask app) ---
 
 class UpdateRequest(BaseModel):
@@ -178,6 +189,9 @@ class GripperRequest(BaseModel):
 
 class ResetRequest(BaseModel):
     pass
+
+class CoordsRequest(BaseModel):
+    coords: list
 
 
 @app.post("/update")
@@ -204,6 +218,26 @@ async def reset(req: ResetRequest = ResetRequest()):
 @app.get("/sync")
 async def sync():
     return await asyncio.to_thread(arm.sync)
+
+
+@app.post("/coords")
+async def set_coords(req: CoordsRequest):
+    await asyncio.to_thread(arm.set_coords, req.coords)
+    return {"m": f"Coords → {[round(c, 1) for c in req.coords]}"}
+
+
+@app.get("/coords")
+async def get_coords():
+    coords = await asyncio.to_thread(arm.get_coords)
+    return {"coords": coords or []}
+
+
+# --- Config discovery ---
+
+@app.get("/config")
+async def config():
+    """Return runtime config for frontend (inference URL, etc.)."""
+    return {"inference_url": INFERENCE_URL}
 
 
 # --- Diagnostics ---
@@ -269,6 +303,7 @@ async def system_reboot():
 # --- Static files + index ---
 
 app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+app.mount("/mecharm", StaticFiles(directory=STATIC_DIR / "mecharm"), name="mecharm")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -283,9 +318,9 @@ def main():
     print("=" * 50)
     print("MechArm Control System (FastAPI)")
     print("=" * 50)
-    print("Browser: http://192.168.3.2:8080")
+    print("Browser: http://mecharm.local")
     print("=" * 50)
-    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="warning",
+    uvicorn.run(app, host="0.0.0.0", port=80, log_level="warning",
                 timeout_graceful_shutdown=3)
 
 

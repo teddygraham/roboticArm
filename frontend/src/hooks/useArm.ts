@@ -9,6 +9,7 @@ export function useArm(
   const [angles, setAngles] = useState<number[]>(() => JOINTS.map(() => 0));
   const [gripper, setGripper] = useState(0);
   const [lastStatus, setLastStatus] = useState("Ready");
+  const [coords, setCoords] = useState<number[]>([0, 0, 0, 0, 0, 0]);
 
   // Debounced joint sending
   const pendingJoints = useRef<Record<number, number>>({});
@@ -112,6 +113,30 @@ export function useArm(
       });
   }, [send]);
 
+  const sendCoords = useCallback(
+    (newCoords: number[]) => {
+      setCoords(newCoords);
+      if (send({ type: "coords", coords: newCoords })) return;
+      fetch("/coords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coords: newCoords }),
+      })
+        .then((r) => r.json())
+        .then((d: { m: string }) => setLastStatus(d.m));
+    },
+    [send],
+  );
+
+  const syncCoords = useCallback(() => {
+    if (send({ type: "sync_coords" })) return;
+    fetch("/coords")
+      .then((r) => r.json())
+      .then((d: { coords?: number[] }) => {
+        if (d.coords && d.coords.length === 6) setCoords(d.coords);
+      });
+  }, [send]);
+
   // Handle incoming WS messages relevant to arm
   const handleMessage = useCallback(
     (msg: WsIncoming) => {
@@ -119,6 +144,8 @@ export function useArm(
         if (msg.a) setAngles(msg.a.map(Math.round));
         if (msg.g !== undefined) setGripper(msg.g);
         setLastStatus("Synced");
+      } else if (msg.type === "coords") {
+        if (msg.coords && msg.coords.length === 6) setCoords(msg.coords);
       } else if (msg.type === "ack") {
         setLastStatus(msg.m);
       } else if (msg.type === "target_ack") {
@@ -141,6 +168,7 @@ export function useArm(
   return {
     angles,
     gripper,
+    coords,
     lastStatus,
     setJoint,
     setGripperValue,
@@ -148,6 +176,8 @@ export function useArm(
     closeGripper,
     reset,
     requestSync,
+    sendCoords,
+    syncCoords,
     handleMessage,
   };
 }

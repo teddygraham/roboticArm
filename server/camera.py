@@ -19,10 +19,11 @@ def _log(msg: str):
 
 
 class CameraManager:
-    def __init__(self, device=0, width=480, height=360, fps=12, quality=65):
+    def __init__(self, device=0, width=640, height=360, fps=12, quality=65):
         self.fps = fps
         self.quality = quality
         self._frame = None
+        self._raw_jpeg = None  # pre-encoded JPEG from hardware MJPEG
         self._lock = threading.Lock()
         self._running = True
 
@@ -45,10 +46,15 @@ class CameraManager:
             _log(f"Opening camera (attempt {attempt}/{CAMERA_OPEN_RETRIES})...")
             cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
             if cap.isOpened():
+                # Request MJPEG from hardware — Pi camera delivers pre-encoded
+                # JPEG frames, eliminating software encoding per frame
+                cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                _log(f"Camera opened on attempt {attempt}.")
+                actual_fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+                fourcc_str = "".join(chr((actual_fourcc >> 8 * i) & 0xFF) for i in range(4))
+                _log(f"Camera opened on attempt {attempt} (fourcc={fourcc_str}).")
                 return cap
             _log(f"Camera not available (attempt {attempt}), retrying in {CAMERA_OPEN_DELAY}s...")
             cap.release()
@@ -57,7 +63,7 @@ class CameraManager:
         return None
 
     def _capture_loop(self):
-        """Continuously grab frames at target fps."""
+        """Continuously grab frames at target fps, caching JPEG for passthrough."""
         if self._cap is None:
             return
         while self._running:
@@ -65,8 +71,12 @@ class CameraManager:
             t0 = time.monotonic()
             ret, frame = self._cap.read()
             if ret:
+                # Encode JPEG once in the capture thread so the MJPEG stream
+                # and /snapshot can grab cached bytes without re-encoding
+                ret2, jpg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, self.quality])
                 with self._lock:
                     self._frame = frame
+                    self._raw_jpeg = jpg.tobytes() if ret2 else None
             elapsed = time.monotonic() - t0
             if elapsed < interval:
                 time.sleep(interval - elapsed)
@@ -75,6 +85,11 @@ class CameraManager:
         """Return the latest captured frame (or None)."""
         with self._lock:
             return self._frame.copy() if self._frame is not None else None
+
+    def get_raw_jpeg(self) -> bytes | None:
+        """Return cached JPEG bytes without re-encoding."""
+        with self._lock:
+            return self._raw_jpeg
 
     def encode_jpeg(self, frame, quality=None):
         """Encode a frame as JPEG bytes."""

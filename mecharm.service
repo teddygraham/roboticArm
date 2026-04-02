@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi
+Environment=INFERENCE_URL=http://172.20.10.3:5001
 ExecStart=/usr/bin/python3 -m server.app
 TimeoutStopSec=10
 ExecStopPost=-/usr/bin/fuser -k /dev/video0

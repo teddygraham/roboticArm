@@ -19,4 +19,4 @@ export const SYNC_INTERVAL_MS = 30000;
 export const DETECT_INTERVAL_MS = 200; // 5fps
 export const DETECT_CANVAS_W = 480;
 export const DETECT_CANVAS_H = 360;
-export const DETECT_MIN_SCORE = 0.5;
+export const DETECT_MIN_SCORE = 0.0;

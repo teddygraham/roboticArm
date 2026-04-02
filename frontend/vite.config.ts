@@ -10,16 +10,19 @@ export default defineConfig({
   server: {
     proxy: {
       "/ws": {
-        target: "http://192.168.3.2:8080",
+        target: "http://mecharm.local",
         ws: true,
       },
-      "/video": "http://192.168.3.2:8080",
-      "/update": "http://192.168.3.2:8080",
-      "/gripper": "http://192.168.3.2:8080",
-      "/reset": "http://192.168.3.2:8080",
-      "/sync": "http://192.168.3.2:8080",
-      "/diagnostics": "http://192.168.3.2:8080",
-      "/api": "http://192.168.3.2:8080",
+      "/video": "http://mecharm.local",
+      "/snapshot": "http://mecharm.local",
+      "/update": "http://mecharm.local",
+      "/gripper": "http://mecharm.local",
+      "/reset": "http://mecharm.local",
+      "/sync": "http://mecharm.local",
+      "/coords": "http://mecharm.local",
+      "/config": "http://mecharm.local",
+      "/diagnostics": "http://mecharm.local",
+      "/api": "http://mecharm.local",
     },
   },
 });

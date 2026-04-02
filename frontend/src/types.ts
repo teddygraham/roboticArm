@@ -41,6 +41,8 @@ export type WsOutgoing =
   | { type: "gripper"; value: number }
   | { type: "reset" }
   | { type: "sync" }
+  | { type: "sync_coords" }
+  | { type: "coords"; coords: number[] }
   | {
       type: "target";
       class: string;
@@ -53,4 +55,5 @@ export type WsIncoming =
   | { type: "pong" }
   | { type: "ack"; m: string }
   | { type: "target_ack"; m: string; status: string }
-  | { type: "sync"; a?: number[]; g?: number };
+  | { type: "sync"; a?: number[]; g?: number }
+  | { type: "coords"; coords: number[] };

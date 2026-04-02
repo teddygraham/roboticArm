@@ -1,3 +1,4 @@
+import type { DetectionMode } from "../hooks/useDetection";
 import type { TargetSelection } from "../types";
 
 interface Props {
@@ -5,6 +6,9 @@ interface Props {
   isLoading: boolean;
   inferenceMs: number;
   target: TargetSelection | null;
+  detectionMode: DetectionMode;
+  hasInferenceServer: boolean;
+  onSetDetectionMode: (mode: DetectionMode) => void;
   onToggle: () => void;
   onSendTarget: () => void;
   onClear: () => void;
@@ -22,6 +26,9 @@ export function DetectionPanel({
   isLoading,
   inferenceMs,
   target,
+  detectionMode,
+  hasInferenceServer,
+  onSetDetectionMode,
   onToggle,
   onSendTarget,
   onClear,
@@ -33,6 +40,32 @@ export function DetectionPanel({
 
   return (
     <div className="bg-slate-800 border border-slate-600 rounded-lg p-4 my-4">
+      {/* Model selector */}
+      <div className="flex rounded-md overflow-hidden border border-slate-600 mb-3">
+        <button
+          onClick={() => onSetDetectionMode("coco")}
+          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
+            detectionMode === "coco"
+              ? "bg-emerald-500 text-slate-900"
+              : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+          }`}
+        >
+          COCO-SSD
+        </button>
+        {hasInferenceServer && (
+          <button
+            onClick={() => onSetDetectionMode("roboflow")}
+            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
+              detectionMode === "roboflow"
+                ? "bg-emerald-500 text-slate-900"
+                : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+            }`}
+          >
+            Server Parts
+          </button>
+        )}
+      </div>
+
       <button
         onClick={onToggle}
         disabled={isLoading}

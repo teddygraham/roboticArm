@@ -54,10 +54,11 @@ export function VideoFeed({
       const [x, y, w, h] = det.bbox;
       const isSelected =
         selectedTarget?.detection === det;
-      const color = isSelected ? "#fbbf24" : "#34d399";
+      const isTeddyBear = det.class === "teddy bear";
+      const color = isSelected ? "#fbbf24" : isTeddyBear ? "#ef4444" : "#34d399";
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = isTeddyBear ? 3 : 2;
       ctx.strokeRect(x, y, w, h);
 
       const label = `${det.class} ${Math.round(det.score * 100)}%`;

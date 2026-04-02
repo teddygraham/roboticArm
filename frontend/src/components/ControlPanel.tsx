@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { JOINTS } from "../constants";
+import type { DetectionMode } from "../hooks/useDetection";
 import type { TargetSelection, WiFiNetwork, WiFiStatus } from "../types";
 import { DetectionPanel } from "./DetectionPanel";
 import { GripperControl } from "./GripperControl";
@@ -26,6 +27,9 @@ interface Props {
   detectLoading: boolean;
   inferenceMs: number;
   selectedTarget: TargetSelection | null;
+  detectMode: DetectionMode;
+  hasInferenceServer: boolean;
+  onSetDetectMode: (mode: DetectionMode) => void;
   onToggleDetection: () => void;
   onSendTarget: () => void;
   onClearTarget: () => void;
@@ -61,6 +65,9 @@ export function ControlPanel({
   detectLoading,
   inferenceMs,
   selectedTarget,
+  detectMode,
+  hasInferenceServer,
+  onSetDetectMode,
   onToggleDetection,
   onSendTarget,
   onClearTarget,
@@ -174,6 +181,9 @@ export function ControlPanel({
             isLoading={detectLoading}
             inferenceMs={inferenceMs}
             target={selectedTarget}
+            detectionMode={detectMode}
+            hasInferenceServer={hasInferenceServer}
+            onSetDetectionMode={onSetDetectMode}
             onToggle={onToggleDetection}
             onSendTarget={onSendTarget}
             onClear={onClearTarget}

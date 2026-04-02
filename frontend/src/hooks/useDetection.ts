@@ -36,7 +36,9 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
-export function useDetection(send: (msg: WsOutgoing) => boolean) {
+export type DetectionMode = "coco" | "roboflow";
+
+export function useDetection(send: (msg: WsOutgoing) => boolean, inferenceUrl?: string) {
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [detections, setDetections] = useState<Detection[]>([]);
@@ -44,12 +46,19 @@ export function useDetection(send: (msg: WsOutgoing) => boolean) {
     null,
   );
   const [inferenceMs, setInferenceMs] = useState(0);
+  const [detectionMode, setDetectionMode] = useState<DetectionMode>("coco");
 
   const modelRef = useRef<CocoModel | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inferenceRunning = useRef(false);
   const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLImageElement | null>(null);
+  const detectionModeRef = useRef<DetectionMode>("coco");
+
+  // Keep ref in sync so runInference closure always sees current mode
+  useEffect(() => {
+    detectionModeRef.current = detectionMode;
+  }, [detectionMode]);
 
   // Called by VideoFeed to register canvas/video refs
   const setRefs = useCallback(
@@ -81,38 +90,87 @@ export function useDetection(send: (msg: WsOutgoing) => boolean) {
     }
   }, []);
 
-  // Preload model in background so "Enable Detection" is instant
+  // Preload COCO-SSD in background so "Enable Detection" is instant
   useEffect(() => {
     loadModel(true);
   }, [loadModel]);
 
-  const runInference = useCallback(async () => {
-    if (inferenceRunning.current || !modelRef.current) return;
+  const runInferenceCoco = useCallback(async () => {
+    if (!modelRef.current) return;
     const video = videoRef.current;
     const canvas = detectCanvasRef.current;
     if (!video || !canvas || !video.naturalWidth) return;
 
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(video, 0, 0, DETECT_CANVAS_W, DETECT_CANVAS_H);
+    const t0 = performance.now();
+    const predictions = await modelRef.current.detect(canvas);
+    setInferenceMs(Math.round(performance.now() - t0));
+
+    const filtered: Detection[] = predictions
+      .filter((p) => p.score >= DETECT_MIN_SCORE)
+      .map((p) => ({
+        class: p.class,
+        score: p.score,
+        bbox: p.bbox as [number, number, number, number],
+      }));
+    setDetections(filtered);
+  }, []);
+
+  const inferenceUrlRef = useRef(inferenceUrl);
+  useEffect(() => {
+    inferenceUrlRef.current = inferenceUrl;
+  }, [inferenceUrl]);
+
+  const runInferenceRoboflow = useCallback(async () => {
+    const url = inferenceUrlRef.current;
+    if (!url) return;
+    const video = videoRef.current;
+    const canvas = detectCanvasRef.current;
+    if (!video || !canvas || !video.naturalWidth) return;
+
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(video, 0, 0, DETECT_CANVAS_W, DETECT_CANVAS_H);
+    const t0 = performance.now();
+
+    const imageData = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+    const resp = await fetch(`${url}/detect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageData }),
+    });
+    const data = await resp.json();
+    setInferenceMs(Math.round(performance.now() - t0));
+
+    if (data.error) {
+      console.error("Inference error:", data.error);
+      return;
+    }
+
+    const filtered: Detection[] = (data.predictions ?? [])
+      .filter((p: Detection) => p.score >= DETECT_MIN_SCORE)
+      .map((p: Detection) => ({
+        class: p.class,
+        score: p.score,
+        bbox: p.bbox as [number, number, number, number],
+      }));
+    setDetections(filtered);
+  }, []);
+
+  const runInference = useCallback(async () => {
+    if (inferenceRunning.current) return;
     inferenceRunning.current = true;
     try {
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(video, 0, 0, DETECT_CANVAS_W, DETECT_CANVAS_H);
-      const t0 = performance.now();
-      const predictions = await modelRef.current.detect(canvas);
-      setInferenceMs(Math.round(performance.now() - t0));
-
-      const filtered: Detection[] = predictions
-        .filter((p) => p.score >= DETECT_MIN_SCORE)
-        .map((p) => ({
-          class: p.class,
-          score: p.score,
-          bbox: p.bbox as [number, number, number, number],
-        }));
-      setDetections(filtered);
+      if (detectionModeRef.current === "roboflow") {
+        await runInferenceRoboflow();
+      } else {
+        await runInferenceCoco();
+      }
     } catch (e) {
       console.error("Detection error:", e);
     }
     inferenceRunning.current = false;
-  }, []);
+  }, [runInferenceCoco, runInferenceRoboflow]);
 
   const startDetection = useCallback(() => {
     setIsActive(true);
@@ -134,10 +192,29 @@ export function useDetection(send: (msg: WsOutgoing) => boolean) {
     if (isActive) {
       stopDetection();
     } else {
-      const model = await loadModel();
-      if (model) startDetection();
+      if (detectionModeRef.current === "coco") {
+        const model = await loadModel();
+        if (model) startDetection();
+      } else {
+        startDetection();
+      }
     }
   }, [isActive, loadModel, startDetection, stopDetection]);
+
+  // When mode changes while active, restart detection with new mode
+  const handleSetDetectionMode = useCallback(
+    (mode: DetectionMode) => {
+      setDetectionMode(mode);
+      if (isActive) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        intervalRef.current = setInterval(runInference, DETECT_INTERVAL_MS);
+      }
+    },
+    [isActive, runInference],
+  );
 
   const selectDetection = useCallback(
     (canvasX: number, canvasY: number) => {
@@ -176,16 +253,34 @@ export function useDetection(send: (msg: WsOutgoing) => boolean) {
     setSelectedTarget(null);
   }, []);
 
+  // Capture current video frame as base64 JPEG for vision commands
+  const captureFrame = useCallback((): string | null => {
+    const video = videoRef.current;
+    if (!video || !video.naturalWidth) return null;
+    // Draw to a temporary canvas so we don't need detection to be active
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = DETECT_CANVAS_W;
+    tmpCanvas.height = DETECT_CANVAS_H;
+    tmpCanvas.getContext("2d")!.drawImage(video, 0, 0, DETECT_CANVAS_W, DETECT_CANVAS_H);
+    return tmpCanvas.toDataURL("image/jpeg", 0.8).split(",")[1] ?? null;
+  }, []);
+
+  const hasInferenceServer = !!inferenceUrl;
+
   return {
     isActive,
     isLoading,
     detections,
     selectedTarget,
     inferenceMs,
+    detectionMode,
+    hasInferenceServer,
     setRefs,
     toggleDetection,
     selectDetection,
     sendTarget,
     clearTarget,
+    setDetectionMode: handleSetDetectionMode,
+    captureFrame,
   };
 }

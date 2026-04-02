@@ -103,5 +103,21 @@ class ArmController:
             except Exception:
                 return {"a": self.current_angles, "g": self.gripper_value}
 
+    def set_coords(self, coords: list, speed: int = 50):
+        """Send Cartesian coordinates [x, y, z, rx, ry, rz] to arm."""
+        with self._serial_lock:
+            try:
+                self.mc.send_coords(coords, speed, 0)
+            except Exception:
+                pass
+
+    def get_coords(self) -> list | None:
+        """Read current Cartesian coordinates from hardware."""
+        with self._serial_lock:
+            try:
+                return self.mc.get_coords()
+            except Exception:
+                return None
+
     def shutdown(self):
         self._running = False

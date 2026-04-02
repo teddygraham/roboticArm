@@ -3,10 +3,24 @@ HOME/
 mcp-server/.venv/
 __pycache__/
 
+# Local Claude Code config (machine-specific paths)
+.claude.json
+.mcp.json
+
 # Frontend build artifacts
 frontend/node_modules/
 frontend/dist/
 
 # Vite build output (generated from frontend/)
-server/static/assets/
-server/static/index.html
+server/static/
+
+# macOS
+.DS_Store
+
+# Inference server
+inference-server/weights.pt
+inference-server/.venv/
+
+# Training images / screenshots
+Image for Training/
+Screenshot*.png
